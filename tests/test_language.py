@@ -53,6 +53,39 @@ def test_spaced_text_is_counted_by_spaces():
     assert count_words("Hello there,  world") == 3
 
 
+# Article 1 of the Universal Declaration of Human Rights in Thai, which is 30
+# words in English. Splitting it on spaces would give 3.
+THAI_ARTICLE_1 = (
+    "มนุษย์ทั้งหลายเกิดมามีอิสระและเสมอภาคกันในเกียรติศักดิ์และสิทธิ "
+    "ต่างมีเหตุผลและมโนธรรม และควรปฏิบัติต่อกันด้วยเจตนารมณ์แห่งภราดรภาพ"
+)
+
+
+def test_a_thai_sentence_is_counted_near_its_english_length():
+    assert len(THAI_ARTICLE_1.split()) == 3
+    assert count_words(THAI_ARTICLE_1) == 26
+
+
+@pytest.mark.parametrize(
+    "letter, characters_per_word",
+    [("ก", 5), ("ກ", 6), ("ក", 6), ("က", 8)],
+    ids=["thai", "lao", "khmer", "burmese"],
+)
+def test_thai_lao_khmer_and_burmese_are_counted_by_characters(
+    letter, characters_per_word
+):
+    assert count_words(letter * characters_per_word * 10) == 10
+    assert count_words(letter * (characters_per_word * 10 + 1)) == 11
+
+
+def test_spaces_between_thai_phrases_do_not_add_words():
+    assert count_words("ก" * 5 + " " + "ก" * 5) == 2
+
+
+def test_thai_and_spaced_words_are_added_together():
+    assert count_words("Hello " + "ก" * 10 + " world") == 4
+
+
 def test_thai_lao_khmer_and_burmese_count_as_unspaced():
     assert is_unspaced("กรุงเทพมหานครเป็นเมืองหลวง")
     assert is_unspaced("東京都は日本の首都である。")

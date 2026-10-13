@@ -12,6 +12,7 @@ words do not vote: English "I" would read as Polish "i". Anything else is
 import math
 import re
 from collections import Counter
+from fractions import Fraction
 
 FUNCTION_WORDS = {
     "en": "the of and to in is that it for was on with as are this be by not have",
@@ -55,6 +56,20 @@ _LETTER = re.compile(r"[^\W\d_]")
 # The SlopBench corpus asks for "about 600 characters" in Chinese and Japanese
 # where it asks for "about 300 words" elsewhere.
 CJK_CHARACTERS_PER_WORD = 2
+# Thai, Lao, Khmer and Burmese have no such corpus figure, so they come from the
+# Universal Declaration of Human Rights (http://efele.net/udhr), whose English text
+# is 1,747 words. Counting every character in each script's Unicode block, Thai has
+# 8,890 (5.1 a word), Lao 10,196 (5.8), Khmer 10,187 (5.8) and Burmese 14,602 (8.4),
+# rounded to a whole number. Like the CJK figure these are characters per word of
+# English text, not per word of the language, because the thresholds that use the
+# count (short text, lane) are in English words. One formal text is a rough guide.
+_UNSPACED_SCRIPTS = (
+    (_CJK, CJK_CHARACTERS_PER_WORD),
+    (re.compile(r"[\u0e00-\u0e7f]"), 5),  # Thai
+    (re.compile(r"[\u0e80-\u0eff]"), 6),  # Lao
+    (re.compile(r"[\u1780-\u17ff]"), 6),  # Khmer
+    (re.compile(r"[\u1000-\u109f]"), 8),  # Burmese
+)
 
 
 def _script_counts(text: str) -> Counter:
@@ -85,11 +100,15 @@ def is_unspaced(text: str) -> bool:
 
 
 def count_words(text: str) -> int:
-    """Words separated by spaces, with Chinese and Japanese, which use none,
-    counted at CJK_CHARACTERS_PER_WORD characters a word."""
-    cjk = len(_CJK.findall(text))
-    spaced = len(_CJK_PUNCTUATION.sub(" ", _CJK.sub(" ", text)).split())
-    return spaced + math.ceil(cjk / CJK_CHARACTERS_PER_WORD)
+    """Words separated by spaces, with the scripts that use none (Chinese,
+    Japanese, Thai, Lao, Khmer, Burmese) counted at a fixed number of characters
+    a word."""
+    spaced = _CJK_PUNCTUATION.sub(" ", text)
+    unspaced = Fraction(0)
+    for script, characters_per_word in _UNSPACED_SCRIPTS:
+        unspaced += Fraction(len(script.findall(text)), characters_per_word)
+        spaced = script.sub(" ", spaced)
+    return len(spaced.split()) + math.ceil(unspaced)
 
 
 def detect_language(text: str) -> str:
