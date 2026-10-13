@@ -3,13 +3,14 @@ started, so only routes that do not run inference are exercised here; the
 full pipeline is covered by the end-to-end run described in .github/CONTRIBUTING.md."""
 
 import asyncio
+from uuid import uuid4
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from app.config import MIN_TEXT_LENGTH
-from app.database import init_database
+from app.database import create_report, init_database
 from app.documents import extract_document_text
 from app.main import app
 
@@ -201,3 +202,50 @@ def test_upload_status_is_accessible_live_region(client):
     assert 'id="upload-status"' in html
     assert 'aria-live="polite"' in html
     assert 'role="status"' in html
+
+
+def test_report_shows_detected_language(client):
+    report_id = uuid4().hex[:12]
+
+    asyncio.run(
+        create_report(
+            report_id=report_id,
+            text_hash="a" * 64,
+            source_type="text",
+            source="",
+            text_excerpt=(
+                "The quick brown fox jumps over the lazy dog. "
+                "This is a simple English sentence with the words "
+                "the, and, of, to, in, is, that, it, for, and was. "
+            ),
+            word_count=25,
+            engines_total=23,
+        )
+    )
+
+    response = client.get(f"/report/{report_id}")
+
+    assert response.status_code == 200
+    assert "Language:" in response.text
+    assert "<b>en</b>" in response.text
+
+
+def test_report_hides_unknown_language(client):
+    report_id = uuid4().hex[:12]
+
+    asyncio.run(
+        create_report(
+            report_id=report_id,
+            text_hash="b" * 64,
+            source_type="text",
+            source="",
+            text_excerpt="12345 !!!",
+            word_count=0,
+            engines_total=23,
+        )
+    )
+
+    response = client.get(f"/report/{report_id}")
+
+    assert response.status_code == 200
+    assert "Language:" not in response.text

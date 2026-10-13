@@ -51,6 +51,9 @@
             <ul class="st-readout__facts">
                 <li><b>{{ "{:,}".format(report.word_count) }}</b> word{{ "" if report.word_count == 1 else "s" }}</li>
                 {% if report.source_type == "url" %}<li class="report-source">{{ report.source }}</li>{% else %}<li>Pasted text</li>{% endif %}
+                {% if report.language != "other" %}
+                <li>Language: <b>{{ report.language }}</b></li>
+                {% endif %}
             </ul>
         </div>
     </section>
