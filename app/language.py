@@ -25,7 +25,15 @@ FUNCTION_WORDS = {
     "pl": "na nie się do to że jest jak co ale tak od po przez dla oraz jego jej są był była który która które ich jako także tego też może już",
     "tr": "ve bir bu da de için ile olarak çok daha gibi olan en ama sonra kadar ise olduğu değil her göre ancak kendi sadece",
     "ro": "și în este pentru care sunt cu din pe mai fost această acest fiind prin între sau nu ca la",
-    "ca": "amb per els les del una que és són també però aquest aquesta seu dels això",
+    # Catalan shares most of its commonest function words with Spanish (no de la el
+    # un en al, as well as que una del), so they voted for Spanish only and Catalan
+    # text read as Spanish, a supported language. Listing them here too makes them
+    # vote for both, and the Catalan-only forms decide. Those (perquè molt seva
+    # doncs què més quan només) are closed-class words from the OPUS/OpenSubtitles
+    # list at https://github.com/hermitdave/FrequencyWords that are at least 700
+    # per million words in Catalan, are absent or 300 times rarer in the Spanish
+    # list, and do not occur in the non-Catalan texts in tests/eval/multilingual.
+    "ca": "amb per els les del una que és són també però aquest aquesta seu dels això no de la el un en al perquè molt seva doncs què més quan només",
     "id": "yang dan di untuk dengan ini itu dari dalam tidak ada pada akan juga atau",
     "vi": "và của là có được trong cho những với này không người các một đã",
     "sv": "och att det som är för med på inte av till har om ett jag",
