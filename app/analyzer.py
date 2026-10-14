@@ -2,8 +2,8 @@ import asyncio
 import logging
 import os
 import uuid
+from collections.abc import AsyncGenerator
 from concurrent.futures import ThreadPoolExecutor
-from typing import AsyncGenerator
 
 from app.cache import compute_text_hash, is_cacheable_report
 from app.calibration import CALIBRATION_VERSION, calibrated_score, quick_score
