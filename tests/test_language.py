@@ -180,29 +180,83 @@ def test_romanian_indonesian_vietnamese_swedish_and_danish_are_unsupported(lang)
     )
 
 
-CATALAN_SENTENCE = (
-    "El consell municipal va aprovar el pla després de diversos mesos de "
-    "debat, i els veïns del barri van dir que ningú no els havia preguntat "
-    "res sobre aquesta decisió, que es va prendre molt de pressa i sense "
-    "avisar-los amb temps."
-)
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Catalan reads as Spanish, a supported language, so it is scored under "
-        "the Spanish calibration instead of being reported as unsupported. "
-        "FUNCTION_WORDS['es'] holds el, de, que, no, es and del, which Catalan "
-        "uses as often, and FUNCTION_WORDS['ca'] only holds forms Spanish lacks: "
-        "6 of 8 varied Catalan sentences were detected as es. Remove this "
-        "marker when the Catalan list is fixed."
+# Issue #141: Catalan shares most of its commonest function words (no de la el
+# un en al que una del) with Spanish, so it read as Spanish, a supported
+# language, and was scored under the Spanish calibration. Written to differ
+# in topic and register, not to pass.
+CATALAN_SENTENCES = [
+    (
+        "El consell municipal va aprovar el pla després de diversos mesos de "
+        "debat, i els veïns del barri van dir que ningú no els havia preguntat "
+        "res sobre aquesta decisió, que es va prendre molt de pressa i sense "
+        "avisar-los amb temps."
     ),
-)
-def test_catalan_is_detected_and_unsupported():
-    assert count_words(CATALAN_SENTENCE) >= 25
-    assert detect_language(CATALAN_SENTENCE) == "ca"
-    assert language_support("ca") == "unsupported"
+    (
+        "Barcelona és la capital de Catalunya i la segona ciutat més gran "
+        "d'Espanya, amb una població d'uns un milió sis-cents mil habitants, i "
+        "és coneguda arreu del món per la seva arquitectura i la seva cuina."
+    ),
+    (
+        "La llengua catalana es parla a Catalunya, al País Valencià, a les Illes "
+        "Balears, a Andorra i a una part d'Aragó, i té més de deu milions de "
+        "parlants que l'utilitzen cada dia."
+    ),
+    (
+        "Els investigadors de la universitat han descobert que alguns dels "
+        "ocells que viuen al delta de l'Ebre canvien les seves rutes migratòries "
+        "a causa de l'escalfament del clima."
+    ),
+    (
+        "No podem continuar així, perquè si no canviem la manera de treballar, "
+        "tot el projecte acabarà fracassant i haurem perdut molts mesos d'esforç "
+        "sense cap resultat que valgui la pena."
+    ),
+    (
+        "Aquesta recepta és molt senzilla: només cal barrejar la farina amb els "
+        "ous i la llet, deixar reposar la massa una hora i després coure-la a "
+        "foc lent en una paella."
+    ),
+]
+
+
+@pytest.mark.parametrize("text", CATALAN_SENTENCES)
+def test_catalan_is_detected_and_unsupported(text):
+    assert count_words(text) >= 25
+    assert detect_language(text) == "ca"
+    assert language_support(detect_language(text)) == "unsupported"
+
+
+SPANISH_SENTENCES = [
+    (
+        "No es el momento de la discusión en el parlamento, porque el presidente "
+        "del gobierno ha dicho que el debate de los presupuestos se aplazará "
+        "hasta el próximo mes."
+    ),
+    (
+        "Me dijo que no vendría a la cena porque estaba cansado, pero al final "
+        "apareció a las diez con una botella de vino y un pastel que había "
+        "comprado en la pastelería de la calle."
+    ),
+    (
+        "La nueva línea de tren unirá el centro de la ciudad con un barrio de la "
+        "periferia, y no se espera que las obras terminen antes de que acabe el "
+        "año que viene."
+    ),
+    (
+        "Los investigadores de la universidad han descubierto que algunos de los "
+        "pájaros que viven en el delta del río cambian sus rutas de migración a "
+        "causa del calentamiento del clima."
+    ),
+]
+
+
+@pytest.mark.parametrize("text", SPANISH_SENTENCES)
+def test_spanish_is_still_spanish(text):
+    """no de la el un en al are listed for Catalan too, so they now vote for both;
+    the Spanish-only words (los, se, las, por, con, para, su, lo, y) must still win."""
+    assert count_words(text) >= 25
+    assert detect_language(text) == "es"
+    assert language_support("es") == "supported"
 
 
 def test_czech_is_not_mistaken_for_polish():
